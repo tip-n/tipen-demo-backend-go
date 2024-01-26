@@ -4,13 +4,13 @@ include .env
 db_url := postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 
 docker-up:
-	sudo docker compose up -d
+	docker compose up --build
 
 docker-down:
-	sudo docker compose down
+	docker compose down --volumes
 
 run:
-	go run cmd/server/run.go
+	go run cmd/main.go
 
 seed-restaurant:
 	go run cmd/seeds/restaurant/main.go
@@ -33,3 +33,10 @@ force-migrate:
 migrate:
 	migrate -database "${db_url}?sslmode=disable" -path db/migrations down
 	migrate -database "${db_url}?sslmode=disable" -path db/migrations up
+
+migrate-down:
+	migrate -database "${db_url}?sslmode=disable" -path db/migrations down
+
+generate:
+	mkdir generated || true
+	oapi-codegen -package schema schema.yml > generated/schema.gen.go

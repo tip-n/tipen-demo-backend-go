@@ -1,10 +1,10 @@
-package env
+package envconf
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
-	"tipen-demo/internal/pkg"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -39,21 +39,30 @@ func ReadEnv() Env {
 			DBPort:     os.Getenv("DB_PORT"),
 		},
 	}
-	if err := pkg.Validator.Struct(e); err != nil {
-		log.Fatalf("error: %v", err)
-	}
+	// if err := pkg.Validator.Struct(e); err != nil {
+	// 	log.Fatalf("error: %v", err)
+	// }
 
 	return e
 }
 
 func (db DatabaseEnv) Url() string {
-	url := "postgresql://" +
-		db.DBUsername + ":" +
-		db.DBPassword + "@" +
-		db.DBHostname + ":" +
-		db.DBPort + "/" +
-		db.DBName +
-		"?sslmode=disable"
+	// url := "postgresql://" +
+	// 	db.DBUsername + ":" +
+	// 	db.DBPassword + "@" +
+	// 	db.DBHostname + ":" +
+	// 	db.DBPort + "/" +
+	// 	db.DBName +
+	// 	"?sslmode=disable"
+
+	url := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		db.DBHostname,
+		db.DBUsername,
+		db.DBPassword,
+		db.DBName,
+		db.DBPort,
+	)
 	return url
 }
 
