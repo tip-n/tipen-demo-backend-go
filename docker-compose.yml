@@ -17,7 +17,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./docker:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     restart: always
     healthcheck:

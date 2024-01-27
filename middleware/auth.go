@@ -1,7 +1,31 @@
 package middleware
 
-import "tipen-demo/pkg"
+import (
+	"errors"
+	"strings"
+	"tipen-demo/pkg"
 
-func (m *Middleware) IsAuthorized(jwt string) error {
-	return pkg.ValidateJWT(jwt)
+	"github.com/gofiber/fiber/v2"
+)
+
+func (m *Middleware) AuthorizeAndReturnID(c *fiber.Ctx) (
+	ID int,
+	err error,
+) {
+	headers := c.GetReqHeaders()
+	authorizationHeader := headers["Authorization"]
+	if len(authorizationHeader) == 0 {
+		err = errors.New("bearer token not found")
+		return
+	}
+	bearerToken := authorizationHeader[0]
+	splitted := strings.Split(bearerToken, " ")
+	if len(splitted) == 0 {
+		err = errors.New("bearer token not valid")
+		return
+	}
+	token := splitted[1]
+
+	ID, err = pkg.ValidateJWTAndGetID(token)
+	return
 }

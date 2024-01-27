@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"tipen-demo/pkg"
 	"tipen-demo/repository"
 )
@@ -51,5 +52,28 @@ func (h *Handler) LoginUser(p LoginUserParams) (jwt string, err error) {
 	}
 
 	err = h.Repo.InsertUserLoginCount(int(user.ID))
+	return
+}
+
+type UserProfile struct {
+	Firstname string `json:"firstname"`
+	Lastname  string `json:"lastname"`
+	Fullname  string `json:"fullname"`
+	Email     string `json:"email"`
+}
+
+func (h *Handler) GetUserProfile(ID int) (resp UserProfile, err error) {
+	user, err := h.Repo.GetUserProfile(ID)
+	if err != nil {
+		return
+	}
+
+	resp = UserProfile{
+		Firstname: user.Firstname,
+		Lastname:  user.Lastname,
+		Fullname:  fmt.Sprintf("%s %s", user.Firstname, user.Lastname),
+		Email:     user.Email,
+	}
+
 	return
 }

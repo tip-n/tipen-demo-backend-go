@@ -25,7 +25,7 @@ func GenerateJWT(userId int64) (token string, err error) {
 	return
 }
 
-func ValidateJWT(tokenStr string) (err error) {
+func ValidateJWTAndGetID(tokenStr string) (id int, err error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -36,9 +36,14 @@ func ValidateJWT(tokenStr string) (err error) {
 		return
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
-		fmt.Println(claims["foo"], claims["nbf"])
+		if claims["user_id"] == nil {
+			err = errors.New("token not valid")
+			return
+		}
+		id = int(claims["user_id"].(float64))
+		return
 	} else {
 		err = errors.New("token not valid")
+		return
 	}
-	return
 }

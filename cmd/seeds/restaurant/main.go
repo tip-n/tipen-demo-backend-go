@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"tipen-demo/config/env"
-	"tipen-demo/internal/pkg"
+	envconf "tipen-demo/config/env"
+	"tipen-demo/pkg"
 
 	sq "github.com/Masterminds/squirrel"
 )
 
 func main() {
-	env := env.ReadEnv()
+	env := envconf.ReadEnv()
 	db, err := env.Database.Init()
 	if err != nil {
 		panic(err.Error())

@@ -29,3 +29,8 @@ func NewRoute(r RouteParams) *Route {
 		Middleware: r.Middleware,
 	}
 }
+
+func (r *Route) Init() {
+	r.InitUser()
+	r.InitSeller()
+}

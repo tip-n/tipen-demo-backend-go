@@ -7,23 +7,22 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type RegisterUserBodyRequest struct {
-	Firstname string `json:"firstname" validate:"required"`
-	Lastname  string `json:"lastname" validate:"required"`
+type RegisterSellerBodyRequest struct {
+	Storename string `json:"storename" validate:"required"`
 	Password  string `json:"password" validate:"required"`
 	Email     string `json:"email" validate:"required"`
 }
 
-type LoginUserBodyRequest struct {
+type LoginSellerBodyRequest struct {
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
 
-func (r *Route) InitUser() {
+func (r *Route) InitSeller() {
 	api := r.Router.Group("/v1")
-	user := api.Group("/user")
-	user.Post("/register", func(c *fiber.Ctx) error {
-		p := RegisterUserBodyRequest{}
+	seller := api.Group("/seller")
+	seller.Post("/register", func(c *fiber.Ctx) error {
+		p := RegisterSellerBodyRequest{}
 
 		if err := c.BodyParser(&p); err != nil {
 			return err
@@ -43,9 +42,8 @@ func (r *Route) InitUser() {
 			}
 		}
 
-		ID, err := r.Handler.RegisterUser(handler.RegisterUserParams{
-			Firstname: p.Firstname,
-			Lastname:  p.Lastname,
+		ID, err := r.Handler.RegisterSeller(handler.RegisterSellerParams{
+			Storename: p.Storename,
 			Password:  p.Password,
 			Email:     p.Email,
 		})
@@ -60,8 +58,8 @@ func (r *Route) InitUser() {
 		})
 	})
 
-	user.Post("/login", func(c *fiber.Ctx) error {
-		p := LoginUserBodyRequest{}
+	seller.Post("/login", func(c *fiber.Ctx) error {
+		p := LoginSellerBodyRequest{}
 
 		if err := c.BodyParser(&p); err != nil {
 			return err
@@ -80,7 +78,7 @@ func (r *Route) InitUser() {
 			}
 		}
 
-		accessToken, err := r.Handler.LoginUser(handler.LoginUserParams{
+		accessToken, err := r.Handler.LoginSeller(handler.LoginSellerParams{
 			Email:    p.Email,
 			Password: p.Password,
 		})
@@ -95,15 +93,15 @@ func (r *Route) InitUser() {
 		})
 	})
 
-	user.Get("/profile", func(c *fiber.Ctx) error {
-		userID, err := r.Middleware.AuthorizeAndReturnID(c)
+	seller.Get("/profile", func(c *fiber.Ctx) error {
+		sellerID, err := r.Middleware.AuthorizeAndReturnID(c)
 		if err != nil {
 			return &fiber.Error{
 				Code:    fiber.ErrUnauthorized.Code,
 				Message: err.Error(),
 			}
 		}
-		resp, err := r.Handler.GetUserProfile(userID)
+		resp, err := r.Handler.GetSellerProfile(sellerID)
 		if err != nil {
 			return &fiber.Error{
 				Code:    fiber.ErrInternalServerError.Code,

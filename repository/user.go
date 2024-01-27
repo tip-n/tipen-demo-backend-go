@@ -1,6 +1,8 @@
 package repository
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Users struct {
 	*gorm.Model
@@ -24,16 +26,19 @@ func (r *Repository) RegisterUser(p Users) (ID int, err error) {
 	return
 }
 
-type GetPasswordByEmailResponse struct {
+type GetUserPasswordByEmailResponse struct {
 	ID       int64
 	Password string
 }
 
 func (r *Repository) GetUserByEmail(email string) (
-	resp GetPasswordByEmailResponse,
+	resp GetUserPasswordByEmailResponse,
 	err error,
 ) {
-	err = r.Db.Model(&Users{}).Select("id", "password").First(&resp).Error
+	err = r.Db.Model(&Users{}).
+		Select("id", "password").
+		Where(&Users{Email: email}).
+		First(&resp).Error
 	return
 }
 
@@ -41,5 +46,21 @@ func (r *Repository) InsertUserLoginCount(ID int) (err error) {
 	err = r.Db.Model(
 		&UserLogins{},
 	).Create(map[string]interface{}{"user_id": ID}).Error
+	return
+}
+
+type GetUserProfileResponse struct {
+	Firstname string
+	Lastname  string
+	Email     string
+}
+
+func (r *Repository) GetUserProfile(ID int) (
+	resp GetUserProfileResponse,
+	err error,
+) {
+	err = r.Db.Model(&Users{}).
+		Select("firstname", "lastname", "email").
+		First(&resp, ID).Error
 	return
 }
