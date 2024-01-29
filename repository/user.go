@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"gorm.io/gorm"
 )
 
@@ -18,27 +20,16 @@ type UserLogins struct {
 }
 
 func (r *Repository) RegisterUser(p Users) (ID int, err error) {
+	if isExist := r.CheckUserExistByEmail(p.Email); isExist {
+		err = errors.New("user already registered")
+		return
+	}
+
 	err = r.Db.Create(&p).Error
 	if err != nil {
 		return
 	}
 	ID = int(p.ID)
-	return
-}
-
-type GetUserPasswordByEmailResponse struct {
-	ID       int64
-	Password string
-}
-
-func (r *Repository) GetUserByEmail(email string) (
-	resp GetUserPasswordByEmailResponse,
-	err error,
-) {
-	err = r.Db.Model(&Users{}).
-		Select("id", "password").
-		Where(&Users{Email: email}).
-		First(&resp).Error
 	return
 }
 
@@ -49,18 +40,49 @@ func (r *Repository) InsertUserLoginCount(ID int) (err error) {
 	return
 }
 
-type GetUserProfileResponse struct {
-	Firstname string
-	Lastname  string
-	Email     string
+func (r *Repository) CheckUserExistByEmail(email string) (isExist bool) {
+	ID := 0
+	isExist = true
+	err := r.Db.Model(&Users{}).
+		Select("id").
+		Where(&Users{Email: email}).
+		First(&ID).Error
+	if ID == 0 || err == gorm.ErrRecordNotFound {
+		isExist = false
+		return
+	}
+	return
 }
 
-func (r *Repository) GetUserProfile(ID int) (
-	resp GetUserProfileResponse,
+func (r *Repository) GetUserByEmail(email string) (
+	resp Users,
 	err error,
 ) {
 	err = r.Db.Model(&Users{}).
-		Select("firstname", "lastname", "email").
+		Where(&Users{Email: email}).
+		First(&resp).Error
+	return
+}
+
+func (r *Repository) GetUserByID(ID int) (
+	resp Users,
+	err error,
+) {
+	err = r.Db.Model(&Users{}).
 		First(&resp, ID).Error
+	return
+}
+
+func (r *Repository) UpdateUser(p Users) (err error) {
+	user, err := r.GetUserByID(int(p.ID))
+	if err != nil {
+		return
+	}
+
+	if p.Firstname != "" {
+		user.Firstname = p.Firstname
+	}
+
+	err = r.Db.Save(&user).Error
 	return
 }

@@ -33,4 +33,5 @@ func NewRoute(r RouteParams) *Route {
 func (r *Route) Init() {
 	r.InitUser()
 	r.InitSeller()
+	r.InitProduct()
 }

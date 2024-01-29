@@ -17,6 +17,9 @@ type LoginSellerBodyRequest struct {
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
+type UpdateSellerBodyRequest struct {
+	Storename string `json:"storename"`
+}
 
 func (r *Route) InitSeller() {
 	api := r.Router.Group("/v1")
@@ -92,9 +95,43 @@ func (r *Route) InitSeller() {
 			"access_token": accessToken,
 		})
 	})
+	seller.Put("/update", func(c *fiber.Ctx) error {
+		p := UpdateSellerBodyRequest{}
 
+		sellerID, err := r.Middleware.AuthorizeSellerAndReturnID(c)
+		if err != nil {
+			return &fiber.Error{
+				Code:    fiber.ErrUnauthorized.Code,
+				Message: err.Error(),
+			}
+		}
+
+		if err := c.BodyParser(&p); err != nil {
+			return err
+		}
+
+		if errs := r.Validator.Validate(p); len(errs) > 0 && errs[0].Error {
+			errMsgs := make([]string, 0)
+
+			for _, err := range errs {
+				errMsgs = append(errMsgs, r.Validator.ErrorMessage(err))
+			}
+
+			return &fiber.Error{
+				Code:    fiber.ErrBadRequest.Code,
+				Message: strings.Join(errMsgs, ", "),
+			}
+		}
+		if err := r.Handler.UpdateSeller(handler.UpdateSellerParams{
+			ID:        sellerID,
+			Storename: p.Storename,
+		}); err != nil {
+			return err
+		}
+		return c.SendString("Successfully Updated")
+	})
 	seller.Get("/profile", func(c *fiber.Ctx) error {
-		sellerID, err := r.Middleware.AuthorizeAndReturnID(c)
+		sellerID, err := r.Middleware.AuthorizeSellerAndReturnID(c)
 		if err != nil {
 			return &fiber.Error{
 				Code:    fiber.ErrUnauthorized.Code,

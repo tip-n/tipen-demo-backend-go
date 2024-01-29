@@ -3,8 +3,12 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"time"
 	"tipen-demo/pkg"
 	"tipen-demo/repository"
+
+	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
 type RegisterUserParams struct {
@@ -34,7 +38,7 @@ type LoginUserParams struct {
 	Password string
 }
 
-func (h *Handler) LoginUser(p LoginUserParams) (jwt string, err error) {
+func (h *Handler) LoginUser(p LoginUserParams) (token string, err error) {
 	user, err := h.Repo.GetUserByEmail(p.Email)
 	if err != nil {
 		return
@@ -46,7 +50,14 @@ func (h *Handler) LoginUser(p LoginUserParams) (jwt string, err error) {
 		return
 	}
 
-	jwt, err = pkg.GenerateJWT(user.ID)
+	t := time.Now()
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"iat":     t.Unix(),
+		"exp":     t.Add(time.Hour * 24).Unix(),
+	}
+
+	token, err = pkg.GenerateJWT(claims)
 	if err != nil {
 		return
 	}
@@ -63,7 +74,7 @@ type UserProfile struct {
 }
 
 func (h *Handler) GetUserProfile(ID int) (resp UserProfile, err error) {
-	user, err := h.Repo.GetUserProfile(ID)
+	user, err := h.Repo.GetUserByID(ID)
 	if err != nil {
 		return
 	}
@@ -75,5 +86,23 @@ func (h *Handler) GetUserProfile(ID int) (resp UserProfile, err error) {
 		Email:     user.Email,
 	}
 
+	return
+}
+
+type UpdateUserParams struct {
+	ID        int
+	Firstname string `json:"firstname"`
+	Lastname  string `json:"lastname"`
+}
+
+func (h *Handler) UpdateUser(p UpdateUserParams) (err error) {
+	user := repository.Users{
+		Model: &gorm.Model{
+			ID: uint(p.ID),
+		},
+		Firstname: p.Firstname,
+		Lastname:  p.Lastname,
+	}
+	err = h.Repo.UpdateUser(user)
 	return
 }
